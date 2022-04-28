@@ -912,3 +912,17 @@ In the last part, there are HSV Values and predefined HSV value buttons. Changes
     61.	</html>
 
 ![enter image description here](https://i.ibb.co/yWwvDyQ/Resim13.png)
+
+# References
+
+ - https://flask.palletsprojects.com/en/2.0.x/
+ - https://docs.opencv.org/master/
+ - https://www.sciencedirect.com/science/article/pii/S1877050915037710
+ - R. Mori, F. Takagi, and F. Miyazaki, “Development of intelligent robot system realizing human skill-realization of ball lifting task using a mobile robot with monocular vision system,” in Robotics and   Automation, 2006. ICRA 2006. Proceedings 2006 IEEE International   Conference on, 2006, pp. 1280-1285. Google Scholar K. G. Beranek,
+ - “Tennis ball retriever,” ed: Google Patents, 1995. Google Scholar S. Cheng, “Research on Ping-Pong Balls Collecting Robot Based on Embedded Vision Processing System,” in Applied Mechanics and   Materials, 2014, pp. 838-841. Google Scholar
+ - https://www.thisisalabama.org/2019/08/12/auburn-grad-invents-worlds-first-robotic-tennis-ball-collector/
+ - http://scholar.ppu.edu/handle/123456789/927 
+ - https://opencv.org/
+ - https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_tutorials.html
+ - https://grabcad.com/
+
