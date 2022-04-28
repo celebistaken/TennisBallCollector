@@ -1,0 +1,71 @@
+<html>
+<body>  
+
+<div align='center'>
+<h1 class="title">University of Turkish Aeronautical Association</h1>
+<h1 class="title">Mechatronics Engineering Department</h1>
+<h2 class="title">MCH 496 Senior Design Project</h2>
+<h3 class="title">BURAK MERT GUL 150443015 <br>
+            YUSUF SAMET TOPALOĞLU 150443036<br>
+            MEHMET ÇELEBİ 190443009</h3><br>
+<img src="https://cdn-yb.ams3.cdn.digitaloceanspaces.com/uploads/universities/148/155542535215472229.jpeg" width = %50/><br>
+
+<form action="{{ url_for('resolution') }}" method="post">
+<label for="RES">Select Resolution (FPS may differ due resoltion):</label><br>
+<input type="number" name="RES"><br>
+<input type="submit">
+</form><br>
+<form action="{{ url_for('tolerance') }}" method="post">
+<label for="TOL">Select Tolerance to minimum Radius (Increasing may effect detecting real objects!):</label><br>
+<input type="number" name="TOL"><br>
+<input type="submit">
+</form><br>
+<a class="btn btn-success" href="https://192.168.1.167" target="_blank">MANUEL CONTROL by Nodemcu</a><br>
+<h3>Arduino Data Send<h3/>
+<form method="post" action="/button2">
+<input type="submit" value="START" name="senddata"/>
+<input type="submit" value="STOP" name="stopdata"/>
+</form><br>
+
+<h3>Filter Selection<h3/>
+<form method="post" action="/buttonfilter">
+<input type="submit" value="MEDIAN" name="medianfilter"/>
+<input type="submit" value="GAUSS" name="gaussfilter"/>
+</form><br>
+
+<form action="{{ url_for('medianval') }}" method="post">
+<label for="TOL">Select value of Median filter to process (Default is 5):</label><br>
+<input type="number" name="MED"><br>
+<input type="submit">
+</form><br>  
+
+<img src="{{ url_for('video_feed1') }}" ><br>
+<img src="{{ url_for('video_feed2') }}"><br>
+
+
+<div align='center'>
+<h1 class="title">Edit HSV</h1>
+
+<form action="{{ url_for('handle_data') }}" method="post">
+<label for="lH">Lower H:</label><br>
+<input type="number" min = "0" max = "255" name="lH"><br>
+<label for="lS">Lower S:</label><br>
+<input type="number" min = "0" max = "255" name="lS"><br>
+<label for="lV">Lower V:</label><br>
+<input type="number" min = "0" max = "255" name="lV"><br>
+<label for="uH">Upper H:</label><br>
+<input type="number" min = "0" max = "255" name="uH"><br>
+<label for="uS">Upper S:</label><br>
+<input type="number" min = "0" max = "255" name="uS"><br>
+<label for="uV">Upper V:</label><br>
+<input type="number" min = "0" max = "255" name="uV"><br>
+<input type="submit">
+</form>
+<h3>Pre-Made HSV Values<h3/>
+<form method="post" action="/button">
+<input type="submit" value="HSV1" name="action1"/>
+<input type="submit" value="HSV2" name="action2" />
+</form>
+</div>
+</body>
+</html>
