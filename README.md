@@ -1,6 +1,18 @@
 # Global Control for Tennis Ball Collector
 
+This Github Repo includes the global control and interface code of the "Tennis Ball Collector Robot" project, which was prepared within the scope of the Turkish Aeronautical Association University Mechatronics Engineering graduation project. HTML and Python languages ​​are used in this project.
+
+![enter image description here](https://i.ibb.co/L0PTPzw/Resim14.png)
+
 **Introductıon**
+
+Tennis is an Olympic sport played between two people with a racket and a ball, or between two teams of two. Players try to throw a ball over the net into the opponent's court with their rackets. The player with the most points within the rules wins the game. The game, which is based on a hand-played game in Medieval France, but started to be played in England in the 1800s, is today an Olympic sport. Tennis balls 65.41 to 68.58 mm in diameter and 56 to 59.4 grams in weight.
+
+Tennis players need to collect the balls all over the court. It is among the things that make this beautiful sport boring and unbearable. Some mechanisms are used to facilitate this work. In the graduation project, we developed a robot that can move autonomously and semi-autonomously.
+
+It moves with 4 wheels working interdependently and has a system that moves inward with the collection mechanism and collects it in the basket in front of the robot. While creating the project, 4 different collection mechanisms were designed, the ones accepted among them were implemented and one of them was decided by the screening process.
+
+Autonomously or semi-autonomously a tennis player can command the robot to move and collect balls through a mobile phone application. Image processing system will be used to determine all tennis balls and their location on the court. This feature is available in our robot.
 
 For the Global Control we aimed to develop algorithm to detect balls in specific distance to create decide which way robot will go. After research we decided to use Raspberry Pi and Open CV Libraries to achieve this goal.
 
@@ -558,4 +570,345 @@ The vertical and horizontal midpoints of the defined rectangle are compared with
     234.	position = 15
     235.	serialsend(position)
     236.	return position
+If the system has not noticed any region or if small points are not included in the system due to the tolerance we have determined (x , y , w, h = 0) the system will give 16 as position. The reason for using 16 instead of 0 is that the parseInt() command used by Arduino sometimes writes 0 because Serial is empty.
 
+    237.	# Returns 16 when there is none
+    238.	if x==0 and y==0:
+    239.	position=16
+    240.	serialsend(position)
+    
+    241.	return position
+
+New position determined is sent to the Arduino with the seralsend() command.
+
+## 2.9 Serialsend() Function
+
+The biggest difficulty experienced with the Serialsend function was that the function was sending the same position repeatedly and intensely. For this reason, the serialsend function was rewritten with a new algorithm. According to this:
+To avoid confusion, a memory variable named positionold was written, which was set to 25. This and arddata (return of Arudino send/stop button we got from User) is called as global variable. If the user has pressed the button to send data to Arduino, the system checks whether the position in the memory is the same as the new position.
+If the position is not the same, it sends the new position to Arduino and writes this data to the memory. By continuing this continuously, it sends the position to the Arduino only when the position changes and when the user wants to send the data.
+
+    242.	# Serial Send algorithm for communication between Arduino and Rpi
+    243.	# Since this communication sends too much data in time Arduino 
+    244.	# program will struggle. Due that program will only send position
+    245.	# if position changes in Global Control.
+    
+    246.	# Initial position cache selected higher to send inital position also.
+    247.	positionold=25
+    248.	def serialsend(position):
+    249.	# Using global to call and change 
+    250.	# variable inside of the function
+    251.	global arddata
+    252.	global positionold
+    
+    253.	# Serial send controlled by Server Application. 
+    254.	# If button passed, program will send data to Arduino. 
+    255.	if arddata == True:
+    256.		# If position changes program sends 
+    257.		# position with serial communicaiton.
+    258.		# If it didnt change, it wont send any variable.
+    259.		if(positionold!=position):
+    
+    260.			print(position)
+    
+    261.			send_string = str(position)
+    262.			send_string += "\n"
+    263.			print(send_string)
+    
+    264.	# Send the string. Make sure you encode it before you send it to the Arduino.
+    265.			ser.write(send_string.encode('utf-8'))
+    266.			positionold=position
+    
+    267.	else:
+    268.		pass
+
+In the segmentation function, on the other hand, information is given to the user through the visual interface according to the allocated position information. The part in the determined position is shown with a white contour, and at the same time, the position of the object is written on it. If position is 16; overlay will return a black triangle on the center of the overlay.
+
+    269.	# Segmentation part of the image. 
+    270.	# In this process program will return overlay mark
+    271.	# in detected position.
+    272.	def segmentation(cv2_im,x, y, pos):
+    273.	#Define font and return h, w and channel value
+    274.	font=cv2.FONT_HERSHEY_SIMPLEX
+    275.	height, width, channels = cv2_im.shape
+    
+    276.	# --------------------  Position between 1 to 5 --------------------
+    277.	if pos == 1:
+    278.	# Returns white rectangle in position
+    279.	cv2_im = cv2.rectangle(cv2_im, (0,0), (int((1/5)*width),
+    int((1/3) * height)), (255,255,255), 2)
+    280.	# adds position text on overlay.
+    281.	cv2_im = cv2.putText(cv2_im, str(pos), (x,y), font, 1, (255, 0, 0), 2, cv2.LINE_AA)
+    282.	return cv2_im
+    
+    
+    283.	if pos == 2:
+    284.	cv2_im = cv2.rectangle(cv2_im, (int((1/5)*width),0), (int((2/5)*width),
+    int((1/3) * height)), (255,255,255), 2)
+    285.	cv2_im = cv2.putText(cv2_im, str(pos), (x,y), font,
+    1, (255, 0, 0), 2, cv2.LINE_AA)
+    286.	return cv2_im
+    
+    287.	if pos == 3:
+    288.	cv2_im = cv2.rectangle(cv2_im, (int((2/5)*width),0), (int((3/5)*width),int((1/3) * height)), (255,255,255), 2)
+    289.	cv2_im = cv2.putText(cv2_im, str(pos), (x,y), font,
+    1, (255, 0, 0), 2, cv2.LINE_AA)
+    290.	return cv2_im
+    
+    291.	if pos == 4:
+    292.	cv2_im = cv2.rectangle(cv2_im, (int((3/5)*width),0), (int((4/5)*width),int((1/3) * height)), (255,255,255), 2)
+    293.	cv2_im = cv2.putText(cv2_im, str(pos), (x,y), font,
+    1, (255, 0, 0), 2, cv2.LINE_AA)
+    294.	return cv2_im
+    
+    295.	if pos == 5:
+    296.	cv2_im = cv2.rectangle(cv2_im, (int((4/5)*width),0), (int(width),int((1/3) * height)), (255,255,255), 2)
+    297.	cv2_im = cv2.putText(cv2_im, str(pos), (x,y), font,
+    1, (255, 0, 0), 2, cv2.LINE_AA)
+    298.	return cv2_im
+    
+    299.	# --------------------  Position between 6 to 10 --------------------
+    300.	if pos == 6:
+    301.	cv2_im = cv2.rectangle(cv2_im, (0,int((1/3) * height)), (int((1/5)*width),int((2/3) * height)), (255,255,255), 2)
+    302.	cv2_im = cv2.putText(cv2_im, str(pos), (x,y), font,
+    1, (255, 0, 0), 2, cv2.LINE_AA)
+    303.	return cv2_im
+    
+    304.	if pos == 7:
+    305.	cv2_im = cv2.rectangle(cv2_im, (int((1/5)*width),int((1/3) * height)), (int((2/5)*width),int((2/3) * height)), (255,255,255), 2)
+    306.	cv2_im = cv2.putText(cv2_im, str(pos), (x,y), font,
+    1, (255, 0, 0), 2, cv2.LINE_AA)
+    307.	return cv2_im
+    
+    308.	if pos == 8:
+    309.	cv2_im = cv2.rectangle(cv2_im, (int((2/5)*width),int((1/3) * height)), (int((3/5)*width),int((2/3) * height)), (255,255,255), 2)
+    310.	cv2_im = cv2.putText(cv2_im, str(pos), (x,y), font,
+    1, (255, 0, 0), 2, cv2.LINE_AA)
+    311.	return cv2_im
+    
+    312.	if pos == 9:
+    313.	cv2_im = cv2.rectangle(cv2_im, (int((3/5)*width),int((1/3) * height)), (int((4/5)*width),int((2/3) * height)), (255,255,255), 2)
+    314.	cv2_im = cv2.putText(cv2_im, str(pos), (x,y), font,
+    1, (255, 0, 0), 2, cv2.LINE_AA)
+    315.	return cv2_im
+    
+    316.	if pos == 10:
+    317.	cv2_im = cv2.rectangle(cv2_im, (int((4/5)*width),int((1/3) * height)), (int(width),int((2/3) * height)), (255,255,255), 2)
+    318.	cv2_im = cv2.putText(cv2_im, str(pos), (x,y), font,
+    1, (255, 0, 0), 2, cv2.LINE_AA)
+    319.	return cv2_im
+    
+    320.	# --------------------  Position between 11 to 15 --------------------
+    321.	if pos == 11:
+    322.	cv2_im = cv2.rectangle(cv2_im, (0,int((2/3) * height)), (int((1/5)*width),int(height)), (255,255,255), 2)
+    323.	cv2_im = cv2.putText(cv2_im, str(pos), (x,y), font,
+    1, (255, 0, 0), 2, cv2.LINE_AA)
+    324.	return cv2_im
+    
+    325.	if pos == 12:
+    326.	cv2_im = cv2.rectangle(cv2_im, (int((1/5)*width),int((2/3) * height)), (int((2/5)*width),int(height)), (255,255,255), 2)
+    327.	cv2_im = cv2.putText(cv2_im, str(pos), (x,y), font,
+    1, (255, 0, 0), 2, cv2.LINE_AA)
+    328.	return cv2_im
+    
+    329.	if pos == 13:
+    330.	cv2_im = cv2.rectangle(cv2_im, (int((2/5)*width),int((2/3) * height)), (int((3/5)*width),int(height)), (255,255,255), 2)
+    331.	cv2_im = cv2.putText(cv2_im, str(pos), (x,y), font,
+    1, (255, 0, 0), 2, cv2.LINE_AA)
+    332.	return cv2_im
+    
+    333.	if pos == 14:
+    334.	cv2_im = cv2.rectangle(cv2_im, (int((3/5)*width),int((2/3) * height)), (int((4/5)*width),int(height)), (255,255,255), 2)
+    335.	cv2_im = cv2.putText(cv2_im, str(pos), (x,y), font,
+    336.	1, (255, 0, 0), 2, cv2.LINE_AA)
+    337.	return cv2_im
+    
+    338.	if pos == 15:
+    339.	cv2_im = cv2.rectangle(cv2_im, (int((4/5)*width),int((2/3) * height)), (int(width),int(height)), (255,255,255), 2)
+    340.	cv2_im = cv2.putText(cv2_im, str(pos), (x,y), font,
+    341.	1, (255, 0, 0), 2, cv2.LINE_AA)
+    342.	return cv2_im
+    
+    343.	# Returns black rectangle on center when there is none
+    344.	else:
+    345.	cv2_im = cv2.rectangle(cv2_im, (int((2/5)*width),int((1/3) * height)), (int((3/5)*width),int((2/3) * height)), (0,0,0), 2)
+    346.	return cv2_im
+
+## 2.10 Drawing Overlay
+
+In order to make the interface more useful, some information that may be useful to the user is added to the video interface. It provides various information to the user, just like the interface on an oscilloscope or similar measuring device.
+347.	# draw black rectangle on top and bottom.
+348.	cv2_im = cv2.rectangle(cv2_im, (0,0), (width, 24), (0,0,0), -1)
+349.	cv2_im = cv2.rectangle(cv2_im, (0,height-24), (width, height), (0,0,0), -1)
+
+    350.	# It shows the transmission status of the data sent to the Arduino. 
+    351.	if arddata == True:
+    352.	datatext = "Sending to Arduino"
+    353.	if arddata == False:
+    354.	datatext = "No data sending to Arduino"
+    355.	Data_status = 'Datasend: {}'.format(str(datatext))
+    356.	cv2_im = cv2.putText(cv2_im, Data_status, (int(width/4)-30, 16),font, 0.55, (255, 255, 255), 1)
+
+First, a black stripe is drawn at the top and bottom of the video. This strip is made with the rectangle() command. Then, a program is written to this strip, which primarily shows the communication status with the Arduino. Here, again, support is taken from the arddata variable and the information from there is written.
+FPS information is written to the system with the calculation of the elapsed time. In addition, with the datatime.now() function, the current time is also included in the interface.
+
+    357.	# writes FPS on the screen.
+    358.	dur1 =round(arr_dur[0]*1000,0)
+    359.	dur2 =round(arr_dur[1]*1000,0)
+    360.	dur3 =round(arr_dur[2]*1000,0)
+    361.	total_duration=dur1 + dur2 + dur3
+    362.	fps=round(1000/total_duration,1)
+    363.	text1 = 'FPS: {}'.format(fps)
+    364.	cv2_im = cv2.putText(cv2_im, text1, (10, 20),font, 0.7, (255, 255,255), 2)
+    
+    365.	now = datetime.now()
+    366.	current_time = now.strftime("%H:%M:%S")
+    
+    367.	# Prints current time on screen
+    368.	str_time='{}'.format(current_time)
+    369.	cv2_im = cv2.putText(cv2_im, str_time, (10, height-8),font, 0.55, (255, 255, 255), 2)
+
+After all this, the current HSV value is written to the interface again. These HSV values are edited and updated as the user changes it within the site. After all this information, the screen is divided into 15 equal parts with the rectangle() function and these parts are evenly distributed.
+
+    370.	str_hsv="HSV: lH: "+ str(lh) + " lS: " + str(ls) +" lV: " +str(lv) +" uH: "+ str(uh) + " uS: " + str(us) +" uV: " +str(uv)
+    371.	cv2_im = cv2.putText(cv2_im, str_hsv, (int(width/2 - 60), height-8),font, 0.45, (150, 150, 255), 2)
+    
+    372.	# Split image to 15 pair
+    373.	cv2_im = cv2.rectangle(cv2_im, (int(width/5)-1,0), (int(width/5)+1,height), (255,0,0), -1)
+    374.	cv2_im = cv2.rectangle(cv2_im, (int(2*width/5)-1,0), (int(2*width/5)+1,height), (255,0,0), -1)
+    375.	cv2_im = cv2.rectangle(cv2_im, (int(3*width/5)-1,0), (int(3*width/5)+1,height), (255,0,0), -1)
+    376.	cv2_im = cv2.rectangle(cv2_im, (int(4*width/5)-1,0), (int(4*width/5)+1,height), (255,0,0), -1)
+    377.	cv2_im = cv2.rectangle(cv2_im, (int(5*width/5)-1,0), (int(5*width/5)+1,height), (255,0,0), -1)
+    
+    378.	# Get position and run segmentation
+    379.	cv2_im = cv2.rectangle(cv2_im, (0,int(height/3)-1), (width, int(height/3)+1), (255,0,0), -1)
+    380.	cv2_im = cv2.rectangle(cv2_im, (0,int(2*height/3)-1), (width, int(2*height/3)+1), (255,0,0), -1)
+
+After the position calculation is done, the segmentation function is run and if the position is not 16, the X and Y coordinate information of the detected area on the interface is also printed. In addition, "No Object" information is printed in the upper right part of the region where the object is located and if there is no object. The interface is completed by drawing a rectangle around the color area defined on top of this entire interface.
+
+    381.	# Return X and Y values if there is blob
+    382.	if pos != 16:
+    383.	coord_of_x='X: {}'.format(x)
+    384.	cv2_im = cv2.putText(cv2_im, coord_of_x, (110, height-8),font, 0.55, (0,255,0), 2)
+    
+    385.	coord_of_y='Y: {}'.format(y)
+    386.	cv2_im = cv2.putText(cv2_im, coord_of_y, (220, height-8),font, 0.55, (0,255,0), 2)
+    
+    387.	# Prints if there is none
+    388.	if(pos==16):
+    389.	str1="No object"
+    
+    390.	# Prints the numbber of position 1-15
+    391.	else:
+    392.	str1='Object is at:' + " " + str(pos)
+    
+    393.	cv2_im = cv2.putText(cv2_im, str1, (width-180, 18),font, 0.7, (0, 255, 255), 2)
+    394.	center=(x,y)
+    
+    395.	# prints rectangle for detected area
+    396.	if pos !=16:
+    397.	cv2_im = cv2.rectangle(cv2_im,center,(x+w,y+h), (0, 255,0),2)
+    
+    398.	return cv2_im
+
+
+After all these processes, the IP and Port where the Flask application will be published are determined and the working principle of the program is completed. Program will start localIP:2250 from anywhere with same internet connection.
+
+    399.	# App works on localhost:2250 and accesable with all devices connected to same internet
+    400.	if __name__ == '__main__':
+    401.	app.run(host='0.0.0.0', port='2250', debug=False, threaded=True) # Run FLASK
+    402.	main()
+
+# **HTML Code:**
+In the frontend, HTML code was used to design the site and place the buttons. In this section, data is exchanged from Flask functions that we are familiar with from Python.
+
+The website welcomes users with a header and the university's logo. After this section, there are two different entries where users can enter resolution and tolerance.
+
+![enter image description here](https://i.ibb.co/p2GQ6kK/Resim11.png)
+
+    1.	<html>
+    2.	<body>  
+    
+    3.	<div align='center'>
+    4.	<h1 class="title">University of Turkish Aeronautical Association</h1>
+    5.	<h1 class="title">Mechatronics Engineering Department</h1>
+    6.	<h2 class="title">MCH 496 Senior Design Project</h2>
+    7.	<h3 class="title">BURAK MERT GUL 150443015 <br>
+    a.	YUSUF SAMET TOPALOĞLU 150443036<br>
+    b.	MEHMET ÇELEBİ 190443009</h3><br>
+    8.	<img src="https://cdn-yb.ams3.cdn.digitaloceanspaces.com/uploads/universities/148/155542535215472229.jpeg" width = %50/><br>
+    
+    9.	<form action="{{ url_for('resolution') }}" method="post">
+    10.	<label for="RES">Select Resolution (FPS may differ due resoltion):</label><br>
+    11.	<input type="number" name="RES"><br>
+    12.	<input type="submit">
+    13.	</form><br>
+    
+    
+    14.	<form action="{{ url_for('tolerance') }}" method="post">
+    15.	<label for="TOL">Select Tolerance to minimum Radius (Increasing may effect detecting real objects!):</label><br>
+    16.	<input type="number" name="TOL"><br>
+    17.	<input type="submit">
+    18.	</form><br>
+
+
+
+Then, by clicking on the added link, users can go to the IP address where the manual control part is located with Nodemcu. After this link, there are buttons that start data exchange to Arduino.
+
+    19.	<a class="btn btn-success" href="https://192.168.1.167" target="_blank">MANUEL CONTROL by Nodemcu</a><br>
+    20.	<h3>Arduino Data Send<h3/>
+    21.	<form method="post" action="/button2">
+    22.	<input type="submit" value="START" name="senddata"/>
+    23.	<input type="submit" value="STOP" name="stopdata"/>
+    24.	</form><br>
+
+In the next part, users can choose between Gaussian and Median filters. In addition, the value of the Median Filter can be entered in this section.
+
+    25.	<h3>Filter Selection<h3/>
+    26.	<form method="post" action="/buttonfilter">
+    27.	<input type="submit" value="MEDIAN" name="medianfilter"/>
+    28.	<input type="submit" value="GAUSS" name="gaussfilter"/>
+    29.	</form><br>
+    
+    30.	<form action="{{ url_for('medianval') }}" method="post">
+    31.	<label for="TOL">Select value of Median filter to process (Default is 5):</label><br>
+    32.	<input type="number" name="MED"><br>
+    33.	<input type="submit">
+    34.	</form><br>
+
+![enter image description here](https://i.ibb.co/cYyWkXg/Resim12.png)
+
+Next comes the two video streams from Python code. One of them is the image created with the interface and the other is the binary image in Bitmap form. These images continue fluently according to the goodness of the internet connection.
+
+    35.	<img src="{{ url_for('video_feed1') }}" ><br>
+    36.	<img src="{{ url_for('video_feed2') }}"><br>
+
+In the last part, there are HSV Values and predefined HSV value buttons. Changes made by the user here are transmitted instantly. User has to enter all HSV values because HTTP communication does not allow to change only one data incoming data at the same time. In addition, since the program changes between 0 and 255, the values that the user can enter are also kept within this range.
+
+    37.	<div align='center'>
+    38.	<h1 class="title">Edit HSV</h1>
+    
+    39.	<form action="{{ url_for('handle_data') }}" method="post">
+    40.	<label for="lH">Lower H:</label><br>
+    41.	<input type="number" min = "0" max = "255" name="lH"><br>
+    42.	<label for="lS">Lower S:</label><br>
+    43.	<input type="number" min = "0" max = "255" name="lS"><br>
+    44.	<label for="lV">Lower V:</label><br>
+    45.	<input type="number" min = "0" max = "255" name="lV"><br>
+    46.	<label for="uH">Upper H:</label><br>
+    47.	<input type="number" min = "0" max = "255" name="uH"><br>
+    48.	<label for="uS">Upper S:</label><br>
+    49.	<input type="number" min = "0" max = "255" name="uS"><br>
+    50.	<label for="uV">Upper V:</label><br>
+    51.	<input type="number" min = "0" max = "255" name="uV"><br>
+    52.	<input type="submit">
+    53.	</form>
+    54.	<h3>Pre-Made HSV Values<h3/>
+    55.	<form method="post" action="/button">
+    56.	<input type="submit" value="HSV1" name="action1"/>
+    57.	<input type="submit" value="HSV2" name="action2" />
+    58.	</form>
+    59.	</div>
+    60.	</body>
+    61.	</html>
+
+![enter image description here](https://i.ibb.co/yWwvDyQ/Resim13.png)
